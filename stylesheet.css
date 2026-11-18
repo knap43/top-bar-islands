@@ -7,19 +7,30 @@
 }
 
 /* Each of the panel's three boxes becomes a pill that hugs its contents. An
- * empty box is allocated no width, so it draws nothing. */
+ * empty box is allocated no width, so it draws nothing. St allows a single
+ * box-shadow, so the faint outline is a border and the shadow is the drop
+ * shadow beneath. */
 #panelBox #panel.top-bar-islands .top-bar-island {
     margin: 4px 6px;
     padding: 0;
     border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
     background-color: rgba(30, 30, 33, 0.92);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+    box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.28);
     transition-duration: 250ms;
 }
 
-/* Over Blur my Shell's blur, which already darkens, a light tint suffices. */
+/* Over Blur my Shell's blur, which already darkens, a light tint suffices.
+ * The pill is translucent here, so its own shadow would darken the glass from
+ * within; the shadow moves to the surface beneath the blur instead. */
 #panelBox #panel.top-bar-islands.top-bar-islands-blurred .top-bar-island {
     background-color: rgba(0, 0, 0, 0.15);
+    box-shadow: none;
+}
+
+#panelBox .top-bar-island-back {
+    border-radius: 999px;
+    box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.28);
 }
 
 #panelBox #panel.top-bar-islands:overview .top-bar-island {

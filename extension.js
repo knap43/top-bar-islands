@@ -15,6 +15,8 @@ const BMS_REBUILD_KEYS = ['blur', 'pipeline', 'pipeline-auto-mode', 'pipeline-da
 const PANEL_CLASS = 'top-bar-islands';
 const BLURRED_CLASS = 'top-bar-islands-blurred';
 const ISLAND_CLASS = 'top-bar-island';
+// Carries the island's shadow when blurred; the opaque blur above it hides the inner part.
+const BACK_CLASS = 'top-bar-island-back';
 // Larger than half any island's height, so both St and Blur my Shell round it into a pill.
 const PILL_RADIUS = 999;
 
@@ -38,7 +40,7 @@ export default class TopBarIslands extends Extension {
         this._backdrop = new Clutter.Actor({name: 'top-bar-islands-backdrop', width: 0, height: 0});
         this._panelBox.insert_child_at_index(this._backdrop, 0);
         this._backs = this._islands.map(() => {
-            const back = new St.Widget({reactive: false, visible: false});
+            const back = new St.Widget({style_class: BACK_CLASS, reactive: false, visible: false});
             this._backdrop.add_child(back);
             return back;
         });
