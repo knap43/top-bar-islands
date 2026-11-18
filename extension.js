@@ -1,5 +1,6 @@
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -56,6 +57,7 @@ export default class TopBarIslands extends Extension {
         this._interfaceSettings = new Gio.Settings({schema_id: 'org.gnome.desktop.interface'});
         this._connect(this._interfaceSettings, 'changed::color-scheme', () => this._rebuildBlur());
 
+        this._watchWorkspaceDots();
         this._findStrip();
         this._rebuildBlur();
     }
@@ -64,6 +66,7 @@ export default class TopBarIslands extends Extension {
         this._generation++;
         this._destroyPipelines();
         this._watchBmsSettings(null);
+        this._unwatchWorkspaceDots();
         this._signals.forEach(([object, id]) => object.disconnect(id));
         this._signals = [];
         this._interfaceSettings = null;
@@ -80,6 +83,50 @@ export default class TopBarIslands extends Extension {
         this._islands = null;
         this._panel = null;
         this._panelBox = null;
+    }
+
+    // GNOME grows each new workspace dot from nothing. If that animation is stopped part-way, as
+    // can happen while the panel is being restyled at login, the dot keeps its partial scale for
+    // the rest of the session. Any dot left so, neither animating nor being removed, is finished.
+    _watchWorkspaceDots() {
+        this._healId = 0;
+        this._indicators = this._panel.statusArea.activities?.get_children()
+            .find(child => child.constructor.name === 'WorkspaceIndicators') ?? null;
+        if (!this._indicators)
+            return;
+
+        const watch = dot => dot.connectObject('transition-stopped', (_dot, name, finished) => {
+            if (!finished && name.startsWith('scale'))
+                this._queueDotHeal();
+        }, this);
+        this._indicators.get_children().forEach(watch);
+        this._indicators.connectObject('child-added', (_indicators, dot) => watch(dot), this);
+        this._queueDotHeal();
+    }
+
+    _unwatchWorkspaceDots() {
+        if (this._healId)
+            GLib.source_remove(this._healId);
+        this._healId = 0;
+        this._indicators?.get_children().forEach(dot => dot.disconnectObject(this));
+        this._indicators?.disconnectObject(this);
+        this._indicators = null;
+    }
+
+    // Deferred, so that an animation replacing the stopped one has started by the time we look.
+    _queueDotHeal() {
+        if (this._healId)
+            return;
+        this._healId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+            this._healId = 0;
+            for (const dot of this._indicators?.get_children() ?? []) {
+                if (dot.destroying || dot.get_transition('scale-x') || dot.get_transition('scale-y'))
+                    continue;
+                if (dot.scale_x !== 1 || dot.scale_y !== 1)
+                    dot.set({scale_x: 1, scale_y: 1});
+            }
+            return GLib.SOURCE_REMOVE;
+        });
     }
 
     _connect(object, signal, callback) {
