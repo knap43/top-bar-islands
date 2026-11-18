@@ -1,0 +1,7 @@
+{
+  "uuid": "top-bar-islands@knap43.github.io",
+  "name": "Top Bar Islands",
+  "description": "Splits the top bar into three floating, content-hugging islands. Under Blur my Shell, each island is blurred with Blur my Shell's own panel pipeline.",
+  "shell-version": ["51"],
+  "url": "https://github.com/knap43/top-bar-islands"
+}
